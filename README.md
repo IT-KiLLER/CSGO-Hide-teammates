@@ -2,7 +2,7 @@
 A plugin that can !hide teammates
 
 Commands:
-  - !hide <def. range 30-300, 0=disable) 
+  - !hide <def. range 30-300, 0=disable>
   - !hide - Toggle hide teammates on/off
  
 Cvars
