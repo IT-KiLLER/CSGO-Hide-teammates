@@ -25,13 +25,13 @@ public Plugin myinfo =
 public void OnPluginStart() 
 { 
 	RegConsoleCmd("sm_hide", Command_Hide); 
-	CreateConVar("sm_hide_version", PLUGIN_VERSION, "Plugin by IT-KILLER", FCVAR_DONTRECORD|FCVAR_SPONLY);
+	CreateConVar("sm_hide_version", PLUGIN_VERSION, "Plugin by IT-KiLLER", FCVAR_DONTRECORD|FCVAR_SPONLY);
 	sm_hide_default_distance  = CreateConVar("sm_hide_default_distance", "60", "default distance (0-999)", _, true, 1.0, true, 999.0);
 	sm_hide_minimum	= CreateConVar("sm_hide_minimum", "30", "minimum (1-999)", _, true, 1.0, true, 999.0);
 	sm_hide_maximum	= CreateConVar("sm_hide_maximum", "300", "maximum (1-999)", _, true, 1.0, true, 999.0);
 	sm_hide_enabled	= CreateConVar("sm_hide_enabled", "1", "enabled or disabled", _, true, 0.0, true, 1.0);
 	sm_hide_team	= CreateConVar("sm_hide_team", "1", "0=both, 1=CT, 2=T", _, true, 0.0, true, 2.0);
-	HookConVarChange(sm_hide_enabled, OnConVarChange);
+	sm_hide_enabled.AddChangeHook(OnConVarChange);
 	for(int client = 1; client <= MaxClients; client++) {
 		if(IsClientInGame(client)) {
 				OnClientPutInServer(client);
@@ -46,13 +46,7 @@ public void OnClientPutInServer(int client)
 	g_distanceHide[client] = sm_hide_default_distance.IntValue;
 	SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit); 
 } 
-/*
-public void OnClientDisconnect(int client)
-{
-	if(!sm_hide_enabled.BoolValue && !IsClientInGame(client)) return;
-	SDKUnhook(client, SDKHook_SetTransmit, Hook_SetTransmit);
-}
-*/
+
 public void OnConVarChange(Handle hCvar, const char[] oldValue, const char[] newValue)
 {
 	if (StrEqual(oldValue, newValue)) return;
@@ -120,4 +114,3 @@ public bool OnlyTeam(int client)
 		return GetClientTeam(client) == CS_TEAM_T;
 	return true;
 }
-
