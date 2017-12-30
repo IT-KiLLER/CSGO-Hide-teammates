@@ -46,10 +46,10 @@ public void OnPluginStart()
 { 
 	RegConsoleCmd("sm_hide", Command_Hide); 
 	
+	sm_hide_enabled	= CreateConVar("sm_hide_enabled", "1", "Disabled/enabled [0/1]", _, true, 0.0, true, 1.0);
 	sm_hide_default_distance  = CreateConVar("sm_hide_default_distance", "60", "default distance [0-999]", _, true, 1.0, true, 999.0);
 	sm_hide_minimum	= CreateConVar("sm_hide_minimum", "30", "The minimum distance a player can choose [1-999]", _, true, 1.0, true, 999.0);
 	sm_hide_maximum	= CreateConVar("sm_hide_maximum", "300", "The maximum distance a player can choose [1-999]", _, true, 1.0, true, 999.0);
-	sm_hide_enabled	= CreateConVar("sm_hide_enabled", "1", "Disabled/enabled [0/1]", _, true, 0.0, true, 1.0);
 	sm_hide_team	= CreateConVar("sm_hide_team", "1", "Which teams should be able to use the command !hide [0=both, 1=CT, 2=T]", _, true, 0.0, true, 2.0);
 	sm_hide_enabled.AddChangeHook(OnConVarChange);
 
@@ -139,7 +139,7 @@ public Action Command_Hide(int client, int args)
 	if((!g_dHide[client] || args == 1 ) && ( customdistance == -1 || (customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) ) )  
 	{
 		g_dHide[client] = (customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) ? customdistance : sm_hide_default_distance.IntValue;
-		CPrintToChat(client,"%s {red}!hide{default} teammates are now {lightgreen}Enabled{default} with distance: %d. %s", TAG_COLOR, g_dHide[client], sm_hide_team.IntValue==1 ? "Only for CTs" : sm_hide_team.IntValue==2 ? "Only for Ts." : "");
+		CPrintToChat(client,"%s {red}!hide{default} teammates are now {lightgreen}Enabled{default} with distance{orange} %d{default}. %s", TAG_COLOR, g_dHide[client], sm_hide_team.IntValue==1 ? "{lightblue}Only for CTs." : sm_hide_team.IntValue==2 ? "{lightblue}Only for Ts." : "");
 	}
 	else if (args >=2 || args == 1 ? customdistance!=0 && !(customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) : false) 
 	{
