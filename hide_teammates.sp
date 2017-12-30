@@ -28,7 +28,7 @@ ConVar sm_hide_default_distance, sm_hide_enabled, sm_hide_minimum, sm_hide_maxim
 Handle g_timer;
 bool g_HidePlayers[MAXPLAYERS+1][MAXPLAYERS+1];
 bool bEnabled = true;
-int g_dHide[MAXPLAYERS+1];
+float g_dHide[MAXPLAYERS+1];
 float timer_distance;
 float timer_vec_target[3];
 float timer_vec_client[3];
@@ -38,7 +38,7 @@ public Plugin myinfo =
 	name = "[CS:GO] Hide teammates", 
 	author = "IT-KiLLER", 
 	description = "A plugin that can !hide teammates with individual distances", 
-	version = "1.1", 
+	version = "1.1.1", 
 	url = "https://github.com/IT-KiLLER" 
 } 
 
@@ -66,7 +66,7 @@ public void OnMapStart()
 {
 	for(int client = 1; client <= MaxClients; client++)
 	{
-		g_dHide[client] = 0;
+		g_dHide[client] = 0.0;
 		for(int target = 1; target <= MaxClients; target++)
 		{
 			g_HidePlayers[client][target] = false;
@@ -83,7 +83,7 @@ public void OnClientPutInServer(int client)
 
 public void OnClientDisconnect(int client)
 {
-	g_dHide[client] = 0;
+	g_dHide[client] = 0.0;
 	for(int target = 1; target <= MaxClients; target++)
 	{
 		g_HidePlayers[client][target] = false;
@@ -101,7 +101,7 @@ public void OnConVarChange(Handle hCvar, const char[] oldValue, const char[] new
 		{
 			if(IsClientInGame(client)) 
 			{
-				g_dHide[client] = 0;
+				g_dHide[client] = 0.0;
 				if(bEnabled)
 				{
 					SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
@@ -127,27 +127,28 @@ public Action Command_Hide(int client, int args)
 		return Plugin_Handled;
 	}
 	
-	int customdistance = -1;
+	float customdistance = -1.0;
 
 	if (args == 1) 
 	{
 		char inputArgs[5];
 		GetCmdArg(1, inputArgs, sizeof(inputArgs));
-		customdistance = StringToInt(inputArgs);
+		customdistance = StringToFloat(inputArgs);
 	}
 
-	if((!g_dHide[client] || args == 1 ) && ( customdistance == -1 || (customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) ) )  
+	if((!g_dHide[client] || args == 1 ) && ( customdistance == -1.0 || (customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) ) )  
 	{
-		g_dHide[client] = (customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) ? customdistance : sm_hide_default_distance.IntValue;
-		CPrintToChat(client,"%s {red}!hide{default} teammates are now {lightgreen}Enabled{default} with distance{orange} %d{default}. %s", TAG_COLOR, g_dHide[client], sm_hide_team.IntValue==1 ? "{lightblue}Only for CTs." : sm_hide_team.IntValue==2 ? "{lightblue}Only for Ts." : "");
+		g_dHide[client] = (customdistance >= sm_hide_minimum.FloatValue && customdistance <= sm_hide_maximum.FloatValue) ? customdistance : sm_hide_default_distance.FloatValue;
+		CPrintToChat(client,"%s {red}!hide{default} teammates are now {lightgreen}Enabled{default} with distance{orange} %.0f{default}. %s", TAG_COLOR, g_dHide[client], sm_hide_team.IntValue==1 ? "{lightblue}Only for CTs." : sm_hide_team.IntValue==2 ? "{lightblue}Only for Ts." : "");
+		g_dHide[client] = Pow(g_dHide[client], 2.0);
 	}
-	else if (args >=2 || args == 1 ? customdistance!=0 && !(customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) : false) 
+	else if (args >=2 || args == 1 ? customdistance!=0.0 && !(customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) : false) 
 	{
 		CPrintToChat(client,"%s {red}!hide{default} Wrong input, range %d-%d", TAG_COLOR, sm_hide_minimum.IntValue, sm_hide_maximum.IntValue);
 	}
-	else if (g_dHide[client] || args == 1 && customdistance == 0) {
+	else if (g_dHide[client] || args == 1 && !customdistance) {
 		CPrintToChat(client,"%s {red}!hide{default} teammates are now {red}Disabled{default}.", TAG_COLOR);
-		g_dHide[client] = 0; 
+		g_dHide[client] = 0.0; 
 	} 
 	return Plugin_Handled; 
 } 
@@ -170,7 +171,7 @@ public Action HideTimer(Handle timer)
 				{
 					GetClientAbsOrigin(target, timer_vec_target);
 					GetClientAbsOrigin(client, timer_vec_client);
-					timer_distance = GetVectorDistance(timer_vec_target, timer_vec_client, false);
+					timer_distance = GetVectorDistance(timer_vec_target, timer_vec_client, true);
 					if(timer_distance < g_dHide[client])
 					{
 						g_HidePlayers[client][target] = true;
