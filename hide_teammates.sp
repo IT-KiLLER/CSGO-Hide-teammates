@@ -211,5 +211,5 @@ public bool OnlyTeam(int client, int target)
 	{
 		return GetClientTeam(client) == CS_TEAM_T && CS_TEAM_T == GetClientTeam(target);
 	}
-	return true;
+	return GetClientTeam(client) == GetClientTeam(target);
 }
