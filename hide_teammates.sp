@@ -23,7 +23,7 @@
 #pragma newdecls required
 #define TAG_COLOR 	"{green}[SM]{default}"
 
-ConVar sm_hide_default_distance, sm_hide_enabled, sm_hide_minimum, sm_hide_maximum, sm_hide_team;
+ConVar sm_hide_enabled, sm_hide_default_enabled, sm_hide_default_distance,sm_hide_minimum, sm_hide_maximum, sm_hide_team;
 
 Handle g_timer;
 bool g_HidePlayers[MAXPLAYERS+1][MAXPLAYERS+1];
@@ -38,15 +38,15 @@ public Plugin myinfo =
 	name = "[CS:GO] Hide teammates", 
 	author = "IT-KiLLER", 
 	description = "A plugin that can !hide teammates with individual distances", 
-	version = "1.1.1", 
+	version = "1.1.2", 
 	url = "https://github.com/IT-KiLLER" 
 } 
 
 public void OnPluginStart() 
 { 
 	RegConsoleCmd("sm_hide", Command_Hide); 
-	
 	sm_hide_enabled	= CreateConVar("sm_hide_enabled", "1", "Disabled/enabled [0/1]", _, true, 0.0, true, 1.0);
+	sm_hide_default_enabled	= CreateConVar("sm_hide_default_enabled", "1", "Default enabled for each player [0/1]", _, true, 0.0, true, 1.0);
 	sm_hide_default_distance  = CreateConVar("sm_hide_default_distance", "60", "default distance [0-999]", _, true, 1.0, true, 999.0);
 	sm_hide_minimum	= CreateConVar("sm_hide_minimum", "30", "The minimum distance a player can choose [1-999]", _, true, 1.0, true, 999.0);
 	sm_hide_maximum	= CreateConVar("sm_hide_maximum", "300", "The maximum distance a player can choose [1-999]", _, true, 1.0, true, 999.0);
@@ -66,7 +66,6 @@ public void OnMapStart()
 {
 	for(int client = 1; client <= MaxClients; client++)
 	{
-		g_dHide[client] = 0.0;
 		for(int target = 1; target <= MaxClients; target++)
 		{
 			g_HidePlayers[client][target] = false;
@@ -78,6 +77,10 @@ public void OnMapStart()
 public void OnClientPutInServer(int client) 
 { 
 	if(!bEnabled) return;
+	if(!IsFakeClient(client))
+	{
+		g_dHide[client] = sm_hide_default_enabled.BoolValue ? Pow(sm_hide_default_distance.FloatValue, 2.0) : 0.0;
+	}
 	SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit); 
 } 
 
@@ -117,6 +120,18 @@ public void OnConVarChange(Handle hCvar, const char[] oldValue, const char[] new
 			g_timer = CreateTimer(0.1, HideTimer, _,TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 		}
 	}
+
+	if(hCvar == sm_hide_default_enabled)
+	{
+		for(int client = 1; client <= MaxClients; client++) 
+		{
+			if(IsClientInGame(client) && !IsFakeClient(client)) 
+			{
+				g_dHide[client] = sm_hide_default_enabled.BoolValue ? Pow(sm_hide_default_distance.FloatValue, 2.0) : 0.0;
+			}
+		}
+
+	}
 }
 
 public Action Command_Hide(int client, int args) 
@@ -139,10 +154,10 @@ public Action Command_Hide(int client, int args)
 	if((!g_dHide[client] || args == 1 ) && ( customdistance == -1.0 || (customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) ) )  
 	{
 		g_dHide[client] = (customdistance >= sm_hide_minimum.FloatValue && customdistance <= sm_hide_maximum.FloatValue) ? customdistance : sm_hide_default_distance.FloatValue;
-		CPrintToChat(client,"%s {red}!hide{default} teammates are now {lightgreen}Enabled{default} with distance{orange} %.0f{default}. %s", TAG_COLOR, g_dHide[client], sm_hide_team.IntValue==1 ? "{lightblue}Only for CTs." : sm_hide_team.IntValue==2 ? "{lightblue}Only for Ts." : "");
+		CPrintToChat(client,"%s {red}!hide{default} teammates are now {lightgreen}Enabled{default} with distance{orange} %.0f{default}. %s", TAG_COLOR, g_dHide[client], sm_hide_team.IntValue == 1 ? "{lightblue}Only for CTs." : sm_hide_team.IntValue==2 ? "{lightblue}Only for Ts." : "");
 		g_dHide[client] = Pow(g_dHide[client], 2.0);
 	}
-	else if (args >=2 || args == 1 ? customdistance!=0.0 && !(customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) : false) 
+	else if (args >=2 || args == 1 ? customdistance != 0.0 && !(customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) : false) 
 	{
 		CPrintToChat(client,"%s {red}!hide{default} Wrong input, range %d-%d", TAG_COLOR, sm_hide_minimum.IntValue, sm_hide_maximum.IntValue);
 	}
@@ -155,7 +170,7 @@ public Action Command_Hide(int client, int args)
 
 public Action HideTimer(Handle timer)
 {
-	if(timer!=g_timer || !bEnabled) 
+	if(timer != g_timer || !bEnabled) 
 	{
 		KillTimer(timer);
 		return Plugin_Stop;
