@@ -46,7 +46,7 @@ public void OnPluginStart()
 { 
 	RegConsoleCmd("sm_hide", Command_Hide); 
 	sm_hide_enabled	= CreateConVar("sm_hide_enabled", "1", "Disabled/enabled [0/1]", _, true, 0.0, true, 1.0);
-	sm_hide_default_enabled	= CreateConVar("sm_hide_default_enabled", "1", "Default enabled for each player [0/1]", _, true, 0.0, true, 1.0);
+	sm_hide_default_enabled	= CreateConVar("sm_hide_default_enabled", "0", "Default enabled for each player [0/1]", _, true, 0.0, true, 1.0);
 	sm_hide_default_distance  = CreateConVar("sm_hide_default_distance", "60", "default distance [0-999]", _, true, 1.0, true, 999.0);
 	sm_hide_minimum	= CreateConVar("sm_hide_minimum", "30", "The minimum distance a player can choose [1-999]", _, true, 1.0, true, 999.0);
 	sm_hide_maximum	= CreateConVar("sm_hide_maximum", "300", "The maximum distance a player can choose [1-999]", _, true, 1.0, true, 999.0);
