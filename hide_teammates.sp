@@ -23,7 +23,7 @@
 #pragma newdecls required
 #define TAG_COLOR 	"{green}[SM]{default}"
 
-ConVar sm_hide_enabled, sm_hide_default_enabled, sm_hide_client_clientprefs_enabled, sm_hide_default_distance,sm_hide_minimum, sm_hide_maximum, sm_hide_team;
+ConVar sm_hide_enabled, sm_hide_default_enabled, sm_hide_clientprefs_enabled, sm_hide_default_distance,sm_hide_minimum, sm_hide_maximum, sm_hide_team;
 
 Handle g_timer;
 Handle g_HideCookie;
@@ -48,7 +48,7 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_hide", Command_Hide); 
 	sm_hide_enabled	= CreateConVar("sm_hide_enabled", "1", "Disabled/enabled [0/1]", _, true, 0.0, true, 1.0);
 	sm_hide_default_enabled	= CreateConVar("sm_hide_default_enabled", "0", "Default enabled for each player [0/1]", _, true, 0.0, true, 1.0);
-	sm_hide_client_clientprefs_enabled	= CreateConVar("sm_hide_client_clientprefs_enabled", "0", "Client preferences enabled [0/1]", _, true, 0.0, true, 1.0);
+	sm_hide_clientprefs_enabled	= CreateConVar("sm_hide_clientprefs_enabled", "0", "Client preferences enabled [0/1]", _, true, 0.0, true, 1.0);
 	sm_hide_default_distance  = CreateConVar("sm_hide_default_distance", "60", "Default distance [0-999]", _, true, 1.0, true, 999.0);
 	sm_hide_minimum	= CreateConVar("sm_hide_minimum", "30", "The minimum distance a player can choose [1-999]", _, true, 1.0, true, 999.0);
 	sm_hide_maximum	= CreateConVar("sm_hide_maximum", "300", "The maximum distance a player can choose [1-999]", _, true, 1.0, true, 999.0);
@@ -98,7 +98,7 @@ public void OnClientCookiesCached(int client)
 	char sCookieValue[4];
 	GetClientCookie(client, g_HideCookie, sCookieValue, sizeof(sCookieValue));
 	
-	if(sm_hide_client_clientprefs_enabled.BoolValue && !StrEqual(sCookieValue, ""))
+	if(sm_hide_clientprefs_enabled.BoolValue && !StrEqual(sCookieValue, ""))
 	{
 		g_dHide[client] = StringToFloat(sCookieValue);
 		g_dHide[client] = Pow(g_dHide[client], 2.0);
@@ -158,7 +158,7 @@ public void OnConVarChange(Handle hCvar, const char[] oldValue, const char[] new
 		}
 	}
 
-	if(hCvar == sm_hide_default_enabled || hCvar == sm_hide_client_clientprefs_enabled)
+	if(hCvar == sm_hide_default_enabled || hCvar == sm_hide_clientprefs_enabled)
 	{
 		for(int client = 1; client <= MaxClients; client++) 
 		{
@@ -178,7 +178,7 @@ public Action Command_Hide(int client, int args)
 		return Plugin_Handled;
 	}
 
-	if(sm_hide_client_clientprefs_enabled.BoolValue && !AreClientCookiesCached(client))
+	if(sm_hide_clientprefs_enabled.BoolValue && !AreClientCookiesCached(client))
 	{
 		CPrintToChat(client, "%s {red}please wait, your settings are retrieved...", TAG_COLOR);
 		return Plugin_Handled;
@@ -207,7 +207,7 @@ public Action Command_Hide(int client, int args)
 		g_dHide[client] = 0.0; 
 	}
 
-	if(sm_hide_client_clientprefs_enabled.BoolValue)
+	if(sm_hide_clientprefs_enabled.BoolValue)
 	{
 		char sCookieValue[4];
 		FormatEx(sCookieValue, sizeof(sCookieValue), "%.0f", g_dHide[client]);
