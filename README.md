@@ -16,7 +16,7 @@ A plugin that can `!hide` teammates. Probably more **performance friendly** than
 ## Cvars
   - `sm_hide_enabled` `1` - *_Disabled/enabled [0/1]_*
   - `sm_hide_default_enabled` `0` - *_Default enabled for each player [0/1]_*
-  - `sm_hide_client_clientprefs_enabled` `0` - *_Client preferences enabled [0/1]_*
+  - `sm_hide_clientprefs_enabled` `0` - *_Client preferences enabled [0/1]_*
   - `sm_hide_default_distance` `60` - *_default distance [0-999]_*
   - `sm_hide_minimum` `30` *_The minimum distance a player can choose [1-999]_*
   - `sm_hide_maximum` `300` *_The maximum distance a player can choose [1-999]_*
@@ -27,7 +27,7 @@ A plugin that can `!hide` teammates. Probably more **performance friendly** than
 
 ## Change log
 - **1.2** - 2018-01-07
-  - Added cvar `sm_hide_client_clientprefs_enabled`
+  - Added cvar `sm_hide_clientprefs_enabled`
   - Added client preferences
 - **1.1.2** - 2018-01-04
   - Added cvar `sm_hide_default_enabled`
