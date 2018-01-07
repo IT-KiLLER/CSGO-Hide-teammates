@@ -18,14 +18,15 @@
 #include <sdkhooks> 
 #include <cstrike>
 #include <colors_csgo>
-
+#include <clientprefs>
 #pragma semicolon 1
 #pragma newdecls required
 #define TAG_COLOR 	"{green}[SM]{default}"
 
-ConVar sm_hide_enabled, sm_hide_default_enabled, sm_hide_default_distance,sm_hide_minimum, sm_hide_maximum, sm_hide_team;
+ConVar sm_hide_enabled, sm_hide_default_enabled, sm_hide_client_clientprefs_enabled, sm_hide_default_distance,sm_hide_minimum, sm_hide_maximum, sm_hide_team;
 
 Handle g_timer;
+Handle g_HideCookie;
 bool g_HidePlayers[MAXPLAYERS+1][MAXPLAYERS+1];
 bool bEnabled = true;
 float g_dHide[MAXPLAYERS+1];
@@ -38,7 +39,7 @@ public Plugin myinfo =
 	name = "[CS:GO] Hide teammates", 
 	author = "IT-KiLLER", 
 	description = "A plugin that can !hide teammates with individual distances", 
-	version = "1.1.2", 
+	version = "1.2", 
 	url = "https://github.com/IT-KiLLER" 
 } 
 
@@ -47,17 +48,24 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_hide", Command_Hide); 
 	sm_hide_enabled	= CreateConVar("sm_hide_enabled", "1", "Disabled/enabled [0/1]", _, true, 0.0, true, 1.0);
 	sm_hide_default_enabled	= CreateConVar("sm_hide_default_enabled", "0", "Default enabled for each player [0/1]", _, true, 0.0, true, 1.0);
-	sm_hide_default_distance  = CreateConVar("sm_hide_default_distance", "60", "default distance [0-999]", _, true, 1.0, true, 999.0);
+	sm_hide_client_clientprefs_enabled	= CreateConVar("sm_hide_client_clientprefs_enabled", "0", "Client preferences enabled [0/1]", _, true, 0.0, true, 1.0);
+	sm_hide_default_distance  = CreateConVar("sm_hide_default_distance", "60", "Default distance [0-999]", _, true, 1.0, true, 999.0);
 	sm_hide_minimum	= CreateConVar("sm_hide_minimum", "30", "The minimum distance a player can choose [1-999]", _, true, 1.0, true, 999.0);
 	sm_hide_maximum	= CreateConVar("sm_hide_maximum", "300", "The maximum distance a player can choose [1-999]", _, true, 1.0, true, 999.0);
 	sm_hide_team	= CreateConVar("sm_hide_team", "1", "Which teams should be able to use the command !hide [0=both, 1=CT, 2=T]", _, true, 0.0, true, 2.0);
 	sm_hide_enabled.AddChangeHook(OnConVarChange);
+
+	g_HideCookie = RegClientCookie("sm_hide", "hide teammates", CookieAccess_Protected);
 
 	for(int client = 1; client <= MaxClients; client++)
 	{
 		if(IsClientInGame(client)) 
 		{
 			OnClientPutInServer(client);
+			if(AreClientCookiesCached(client))
+			{
+				OnClientCookiesCached(client);
+			}
 		}
 	}
 } 
@@ -71,18 +79,36 @@ public void OnMapStart()
 			g_HidePlayers[client][target] = false;
 		}
 	}
+	if(!bEnabled) return;
+
 	g_timer = CreateTimer(0.1, HideTimer, _,TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnClientPutInServer(int client) 
 { 
 	if(!bEnabled) return;
-	if(!IsFakeClient(client))
-	{
-		g_dHide[client] = sm_hide_default_enabled.BoolValue ? Pow(sm_hide_default_distance.FloatValue, 2.0) : 0.0;
-	}
+
 	SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit); 
-} 
+}
+
+public void OnClientCookiesCached(int client)
+{
+	if(IsFakeClient(client)) return;
+	
+	char sCookieValue[4];
+	GetClientCookie(client, g_HideCookie, sCookieValue, sizeof(sCookieValue));
+	
+	if(sm_hide_client_clientprefs_enabled.BoolValue && !StrEqual(sCookieValue, ""))
+	{
+		g_dHide[client] = StringToFloat(sCookieValue);
+		g_dHide[client] = Pow(g_dHide[client], 2.0);
+	}
+	else if(sm_hide_default_enabled.BoolValue)
+	{
+		g_dHide[client] = sm_hide_default_distance.FloatValue;
+		g_dHide[client] = Pow(g_dHide[client], 2.0);
+	}
+}
 
 public void OnClientDisconnect(int client)
 {
@@ -99,12 +125,23 @@ public void OnConVarChange(Handle hCvar, const char[] oldValue, const char[] new
 
 	if (hCvar == sm_hide_enabled)
 	{
+		if(g_timer != INVALID_HANDLE)
+		{
+			KillTimer(g_timer);
+		}
+
 		bEnabled = sm_hide_enabled.BoolValue;
+
 		for(int client = 1; client <= MaxClients; client++) 
 		{
+			for(int target = 1; target <= MaxClients; target++)
+			{
+				g_HidePlayers[client][target] = false;
+			}
+
 			if(IsClientInGame(client)) 
 			{
-				g_dHide[client] = 0.0;
+				OnClientCookiesCached(client);
 				if(bEnabled)
 				{
 					SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
@@ -117,20 +154,19 @@ public void OnConVarChange(Handle hCvar, const char[] oldValue, const char[] new
 		}
 		if(bEnabled)
 		{
-			g_timer = CreateTimer(0.1, HideTimer, _,TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+			g_timer = CreateTimer(0.1, HideTimer, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 		}
 	}
 
-	if(hCvar == sm_hide_default_enabled)
+	if(hCvar == sm_hide_default_enabled || hCvar == sm_hide_client_clientprefs_enabled)
 	{
 		for(int client = 1; client <= MaxClients; client++) 
 		{
-			if(IsClientInGame(client) && !IsFakeClient(client)) 
+			if(IsClientInGame(client)) 
 			{
-				g_dHide[client] = sm_hide_default_enabled.BoolValue ? Pow(sm_hide_default_distance.FloatValue, 2.0) : 0.0;
+				OnClientCookiesCached(client);
 			}
 		}
-
 	}
 }
 
@@ -141,7 +177,13 @@ public Action Command_Hide(int client, int args)
 		CPrintToChat(client, "%s {red}Currently disabled", TAG_COLOR);
 		return Plugin_Handled;
 	}
-	
+
+	if(sm_hide_client_clientprefs_enabled.BoolValue && !AreClientCookiesCached(client))
+	{
+		CPrintToChat(client, "%s {red}please wait, your settings are retrieved...", TAG_COLOR);
+		return Plugin_Handled;
+	}
+
 	float customdistance = -1.0;
 
 	if (args == 1) 
@@ -155,7 +197,6 @@ public Action Command_Hide(int client, int args)
 	{
 		g_dHide[client] = (customdistance >= sm_hide_minimum.FloatValue && customdistance <= sm_hide_maximum.FloatValue) ? customdistance : sm_hide_default_distance.FloatValue;
 		CPrintToChat(client,"%s {red}!hide{default} teammates are now {lightgreen}Enabled{default} with distance{orange} %.0f{default}. %s", TAG_COLOR, g_dHide[client], sm_hide_team.IntValue == 1 ? "{lightblue}Only for CTs." : sm_hide_team.IntValue==2 ? "{lightblue}Only for Ts." : "");
-		g_dHide[client] = Pow(g_dHide[client], 2.0);
 	}
 	else if (args >=2 || args == 1 ? customdistance != 0.0 && !(customdistance >= sm_hide_minimum.IntValue && customdistance <= sm_hide_maximum.IntValue) : false) 
 	{
@@ -164,7 +205,16 @@ public Action Command_Hide(int client, int args)
 	else if (g_dHide[client] || args == 1 && !customdistance) {
 		CPrintToChat(client,"%s {red}!hide{default} teammates are now {red}Disabled{default}.", TAG_COLOR);
 		g_dHide[client] = 0.0; 
-	} 
+	}
+
+	if(sm_hide_client_clientprefs_enabled.BoolValue)
+	{
+		char sCookieValue[4];
+		FormatEx(sCookieValue, sizeof(sCookieValue), "%.0f", g_dHide[client]);
+		SetClientCookie(client, g_HideCookie, sCookieValue);
+	}
+
+	g_dHide[client] = Pow(g_dHide[client], 2.0);
 	return Plugin_Handled; 
 } 
 
