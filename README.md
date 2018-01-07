@@ -1,4 +1,4 @@
-# [CS:GO] Hide teammates 1.1.2
+# [CS:GO] Hide teammates 1.2
 A plugin that can `!hide` teammates. Probably more **performance friendly** than most plugins like this. This
  plugin has several smart features that make it easier for the player to choose distance and is perfect for laser and boss fight.
 
@@ -6,6 +6,7 @@ A plugin that can `!hide` teammates. Probably more **performance friendly** than
   - Adjustable distance
   - Performance friendly
   - Adjustable cvars
+  - Client preferences
   
 ## Commands:
   - **!hide** `0-300` - *_Choose a value between def. range 30-300, 0=disable_*
@@ -14,7 +15,8 @@ A plugin that can `!hide` teammates. Probably more **performance friendly** than
  
 ## Cvars
   - `sm_hide_enabled` `1` - *_Disabled/enabled [0/1]_*
-  - `sm_hide_default_enabled` `1` - *_Default enabled for each player [0/1]_*
+  - `sm_hide_default_enabled` `0` - *_Default enabled for each player [0/1]_*
+  - `sm_hide_client_clientprefs_enabled` `0` - *_Client preferences enabled [0/1]_*
   - `sm_hide_default_distance` `60` - *_default distance [0-999]_*
   - `sm_hide_minimum` `30` *_The minimum distance a player can choose [1-999]_*
   - `sm_hide_maximum` `300` *_The maximum distance a player can choose [1-999]_*
@@ -24,6 +26,9 @@ A plugin that can `!hide` teammates. Probably more **performance friendly** than
 ### [Download (smx)](https://github.com/IT-KiLLER/CSGO-Hide-teammates/raw/master/hide_teammates.smx)    [Source code (zip)](https://github.com/IT-KiLLER/CSGO-Hide-teammates/archive/master.zip)
 
 ## Change log
+- **1.2** - 2018-01-07
+  - Added cvar `sm_hide_client_clientprefs_enabled`
+  - Added client preferences
 - **1.1.2** - 2018-01-04
   - Added cvar `sm_hide_default_enabled`
 - **1.1.1** - 2017-12-30
