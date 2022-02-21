@@ -68,6 +68,8 @@ public void OnPluginStart()
 			}
 		}
 	}
+	
+	HookEvent("player_death", OnPlayerDeath);
 } 
 
 public void OnMapStart()
@@ -265,7 +267,19 @@ public Action Hook_SetTransmit(int target, int client)
 		return Plugin_Handled;
 	}
 	return Plugin_Continue; 
-}  
+}
+
+void OnPlayerDeath(Event event, const char[] name, bool dontBroadcast)
+{
+	int victim = GetClientOfUserId(event.GetInt("userid"));
+	if (!victim)
+		return;
+	
+	for (int target = 1; target <= MaxClients; target++)
+	{
+		g_HidePlayers[victim][target] = false;
+	}
+}
 
 public bool OnlyTeam(int client, int target)
 {
