@@ -81,7 +81,12 @@ public void OnMapStart()
 	}
 	if(!bEnabled) return;
 
-	g_timer = CreateTimer(0.1, HideTimer, _,TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+	g_timer = CreateTimer(0.1, HideTimer, _, TIMER_REPEAT);
+}
+
+public void OnMapEnd()
+{
+	delete g_timer;
 }
 
 public void OnClientPutInServer(int client) 
@@ -125,10 +130,7 @@ public void OnConVarChange(Handle hCvar, const char[] oldValue, const char[] new
 
 	if (hCvar == sm_hide_enabled)
 	{
-		if(g_timer != INVALID_HANDLE)
-		{
-			KillTimer(g_timer);
-		}
+		delete g_timer;
 
 		bEnabled = sm_hide_enabled.BoolValue;
 
@@ -220,12 +222,6 @@ public Action Command_Hide(int client, int args)
 
 public Action HideTimer(Handle timer)
 {
-	if(timer != g_timer || !bEnabled) 
-	{
-		KillTimer(timer);
-		return Plugin_Stop;
-	} 
-
 	for(int client = 1; client <= MaxClients; client++)
 	{
 		if(IsClientInGame(client) && IsPlayerAlive(client)) 
